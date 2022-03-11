@@ -1,0 +1,14 @@
+{
+  "resourceName": "fileStorage",
+  "policyUUID": "eaddbbbc",
+  "bucketName": "morekalybucket",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "triggerFunction": "NONE",
+  "groupAccess": {}
+}

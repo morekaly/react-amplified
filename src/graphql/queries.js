@@ -7,6 +7,7 @@ export const getEvidence = /* GraphQL */ `
       id
       name
       description
+      image
       createdAt
       updatedAt
     }
@@ -23,6 +24,7 @@ export const listEvidences = /* GraphQL */ `
         id
         name
         description
+        image
         createdAt
         updatedAt
       }

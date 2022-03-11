@@ -10,6 +10,7 @@ export const createEvidence = /* GraphQL */ `
       id
       name
       description
+      image
       createdAt
       updatedAt
     }
@@ -24,6 +25,7 @@ export const updateEvidence = /* GraphQL */ `
       id
       name
       description
+      image
       createdAt
       updatedAt
     }
@@ -38,6 +40,7 @@ export const deleteEvidence = /* GraphQL */ `
       id
       name
       description
+      image
       createdAt
       updatedAt
     }
