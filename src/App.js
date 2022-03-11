@@ -86,7 +86,7 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
               <p>{evidence.description}</p>
               <button onClick={() => deleteEvidence(evidence)}>Delete Evidence</button>
               {
-                note.image && <img src={note.image} style={{width: 400}} />
+                evidence.image && <img src={evidence.image} style={{width: 400}} />
               }
             </div>
           ))
