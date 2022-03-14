@@ -68,11 +68,11 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
         placeholder="Evidence name"
         value={formData.name}
       />
-      <input
+      {/* <input
         onChange={e => setFormData({ ...formData, 'description': e.target.value})}
         placeholder="Evidence description"
         value={formData.description}
-      />
+      /> */}
       <input
         type="file"
         onChange={onChange}
@@ -83,7 +83,7 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
           evidences.map(evidence => (
             <div key={evidence.id || evidence.name}>
               <h2>{evidence.name}</h2>
-              <p>{evidence.description}</p>
+              {/* <p>{evidence.description}</p> */}
               <button onClick={() => deleteEvidence(evidence)}>Delete Evidence</button>
               {
                 evidence.image && <img src={evidence.image} style={{width: 400}} />
