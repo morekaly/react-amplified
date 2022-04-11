@@ -1,14 +1,14 @@
 {
   "version": "1",
   "cognitoConfig": {
-    "identityPoolName": "reactamplified53bbe7d6_identitypool_53bbe7d6",
+    "identityPoolName": "reactamplified_identitypool",
     "allowUnauthenticatedIdentities": false,
-    "resourceNameTruncated": "reacta53bbe7d6",
-    "userPoolName": "reactamplified53bbe7d6_userpool_53bbe7d6",
+    "resourceNameTruncated": "reacta2fec7794",
+    "userPoolName": "reactamplified_userpool",
     "autoVerifiedAttributes": [
-      "email"
+      "phone_number"
     ],
-    "mfaConfiguration": "OFF",
+    "mfaConfiguration": "ON",
     "mfaTypes": [
       "SMS Text Message"
     ],
@@ -16,9 +16,14 @@
     "smsVerificationMessage": "Your verification code is {####}",
     "emailVerificationSubject": "Your verification code",
     "emailVerificationMessage": "Your verification code is {####}",
-    "defaultPasswordPolicy": false,
+    "defaultPasswordPolicy": true,
     "passwordPolicyMinLength": 8,
-    "passwordPolicyCharacters": [],
+    "passwordPolicyCharacters": [
+      "Requires Lowercase",
+      "Requires Uppercase",
+      "Requires Numbers",
+      "Requires Symbols"
+    ],
     "requiredAttributes": [
       "email"
     ],
@@ -31,15 +36,17 @@
     "userpoolClientReadAttributes": [
       "email"
     ],
-    "userpoolClientLambdaRole": "reacta53bbe7d6_userpoolclient_lambda_role",
-    "userpoolClientSetAttributes": false,
-    "sharedId": "53bbe7d6",
-    "resourceName": "reactamplified53bbe7d6",
+    "userpoolClientLambdaRole": "reacta2fec7794_userpoolclient_lambda_role",
+    "userpoolClientSetAttributes": true,
+    "sharedId": "2fec7794",
+    "resourceName": "reactamplifiedUserPool",
     "authSelections": "identityPoolAndUserPool",
-    "useDefault": "default",
-    "usernameAttributes": [
-      "email"
-    ],
+    "useDefault": "manual",
+    "thirdPartyAuth": false,
+    "userPoolGroups": false,
+    "adminQueries": false,
+    "triggers": {},
+    "hostedUI": false,
     "userPoolGroupList": [],
     "serviceName": "Cognito",
     "usernameCaseSensitive": false,

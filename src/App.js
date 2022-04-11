@@ -1,98 +1,108 @@
-import React, { useState, useEffect } from 'react';
-import { API, Storage } from 'aws-amplify';
-import { listEvidences } from './graphql/queries';
-import { createEvidence as createEvidenceMutation, deleteEvidence as deleteEvidenceMutation } from './graphql/mutations';
-import { Amplify } from 'aws-amplify';
-import { withAuthenticator } from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
-import awsExports from './aws-exports';
-Amplify.configure(awsExports);
+import React, { useState } from "react";
+import { Amplify, Storage } from "aws-amplify";
+import { Container } from "semantic-ui-react";
+import {
+  Button,
+  Flex,
+  TextField,
+  withAuthenticator,
+} from "@aws-amplify/ui-react";
 
-const initialFormState = { name: '', description: '' }
+import awsExports from "./aws-exports";
+import FilesList from "./FilesList";
+
+import "@aws-amplify/ui-react/styles.css";
+
+export const UserContext = React.createContext();
+
+Amplify.configure(awsExports);
 
 function App({ isPassedToWithAuthenticator = true, signOut, user }) {
   if (!isPassedToWithAuthenticator) {
     throw new Error(`isPassedToWithAuthenticator was not provided`);
   }
 
-  const [evidences, setEvidence] = useState([]);
-  const [formData, setFormData] = useState(initialFormState);
+  const [loading, setLoading] = useState(false);
+  const [folderName, setFolderName] = useState();
+  const [files, setFiles] = useState([]);
 
-  useEffect(() => {
-    fetchEvidence();
-  }, []);
- 
-  async function fetchEvidence() {
-    const apiData = await API.graphql({ query: listEvidences });
-    const notesFromAPI = apiData.data.listEvidences.items;
-    await Promise.all(notesFromAPI.map(async evidence => {
-      if (evidence.image) {
-        const image = await Storage.get(evidence.image);
-        evidence.image = image;
-      }
-      return evidence;
-    }))
-    setEvidence(apiData.data.listEvidences.items);
-  }
+  const handleChange = async (e) => {
+    const fileContent = e.target.files[0];
+    /*const fileName = e.target.files[0].name*/
+    const fileType = e.target.files[0].type;
+    let ext = fileContent.name.split(".").pop().toLowerCase();
+    if (!folderName) window.alert("Please enter folder name");
+    let fileName =
+      folderName +
+      "/" +
+      fileContent.name.substr(0, fileContent.name.indexOf(ext) - 1) +
+      "." +
+      ext;
 
-  async function createEvidence() {
-    if (!formData.name || !formData.description) return;
-    await API.graphql({ query: createEvidenceMutation, variables: { input: formData } });
-    if (formData.image) {
-      const image = await Storage.get(formData.image);
-      formData.image = image;
+    try {
+      setLoading(true);
+      // Upload the file to s3 with private access level.
+      await Storage.put(fileName, fileContent, {
+        contentType: fileType,
+        level: "private",
+        progressCallback(progress) {
+          console.log(`Uploaded: ${progress.loaded}/${progress.total}`);
+        },
+      });
+      setLoading(false);
+    } catch (err) {
+      console.log(err);
+      setLoading(false);
     }
-    setEvidence([ ...evidences, formData ]);
-    setFormData(initialFormState);
-  }
+  };
 
-  async function deleteEvidence({ id }) {
-    const newEvidenceArray = evidences.filter(evidence => evidence.id !== id);
-    setEvidence(newEvidenceArray);
-    await API.graphql({ query: deleteEvidenceMutation, variables: { input: { id } }});
-  }
-
-  async function onChange(e) {
-    if (!e.target.files[0]) return
-    const file = e.target.files[0];
-    setFormData({ ...formData, image: file.name });
-    await Storage.put(file.name, file);
-    fetchEvidence();
-  }
+  const fetchFiles = () => {
+    Storage.list(`${folderName}/`, { level: "private" }) // for listing ALL files without prefix, pass '' instead
+      .then((result) => setFiles(result))
+      .catch((error) => {
+        console.error(error);
+        setFiles([]);
+      });
+  };
 
   return (
-    <div className="App">
-      <h1>PD Evidence Storage App</h1>
-      <input
-        onChange={e => setFormData({ ...formData, 'name': e.target.value})}
-        placeholder="Evidence name"
-        value={formData.name}
-      />
-      {/* <input
-        onChange={e => setFormData({ ...formData, 'description': e.target.value})}
-        placeholder="Evidence description"
-        value={formData.description}
-      /> */}
-      <input
-        type="file"
-        onChange={onChange}
-      />
-      <button onClick={createEvidence}>Create Evidence</button>
-      <div style={{marginBottom: 30}}>
-        {
-          evidences.map(evidence => (
-            <div key={evidence.id || evidence.name}>
-              <h2>{evidence.name}</h2>
-              {/* <p>{evidence.description}</p> */}
-              <button onClick={() => deleteEvidence(evidence)}>Delete Evidence</button>
-              {
-                evidence.image && <img src={evidence.image} style={{width: 400}} />
-              }
-            </div>
-          ))
-        }
-      </div>
-      <button onClick={signOut}>Sign out</button>
+    <div>
+      <h1>File Management System</h1>
+
+      <Container text style={{ marginTop: "3em" }}>
+        <UserContext.Provider user={user}>
+          <div className="App">
+            <h2> Upload File to S3 </h2>
+            <Flex>
+              <TextField
+                size="small"
+                label="Folder Name"
+                value={folderName}
+                onChange={(e) => setFolderName(e.currentTarget.value)}
+              />
+              <br />
+            </Flex>
+            {loading ? (
+              <h3>Uploading...</h3>
+            ) : (
+              <input
+                type="file"
+                accept="*/*"
+                onChange={(evt) => handleChange(evt)}
+              />
+            )}
+          </div>
+          <h1></h1>
+          <div className="App">
+            <h2> Download File from S3 </h2>
+            <Button onClick={fetchFiles}>Fetch files</Button>
+            <FilesList files={files} />
+          </div>
+        </UserContext.Provider>
+      </Container>
+
+      <h1></h1>
+      <button onClick={signOut}>Sign Out</button>
     </div>
   );
 }

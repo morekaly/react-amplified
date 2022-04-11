@@ -17,7 +17,13 @@
         "reactamplifiede2c7b2eee2c7b2ee": {},
         "reactamplified36e6d7ac": {},
         "reactamplified7b91173f": {},
-        "reactamplified53bbe7d6": {}
+        "reactamplifiedUserPool": {}
+      },
+      "storage": {
+        "reactamplified72de8a0f": {
+          "bucketName": "reactamplifiedbucket-staging",
+          "region": "us-east-1"
+        }
       }
     }
   }
