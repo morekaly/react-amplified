@@ -21,10 +21,10 @@ const FilesList = ({ files }) => {
 
   const downloadFile = async (fileName) => {
     try {
-      // Download the file from s3 with private access level.
+      // Download the file from s3 with public access level.
       const result = await Storage.get(fileName, {
         download: true,
-        level: "private",
+        level: "public",
       });
       downloadBlob(result.Body, fileName);
     } catch (err) {

@@ -1,33 +1,11 @@
 {
   "auth": {
-    "reactamplifiedUserPool": {
+    "reactamplifiedd384ec1b": {
       "service": "Cognito",
+      "serviceType": "imported",
       "providerPlugin": "awscloudformation",
       "dependsOn": [],
-      "customAuth": false,
-      "frontendAuthConfig": {
-        "socialProviders": [],
-        "usernameAttributes": [],
-        "signupAttributes": [
-          "EMAIL"
-        ],
-        "passwordProtectionSettings": {
-          "passwordPolicyMinLength": 8,
-          "passwordPolicyCharacters": [
-            "REQUIRES_LOWERCASE",
-            "REQUIRES_UPPERCASE",
-            "REQUIRES_NUMBERS",
-            "REQUIRES_SYMBOLS"
-          ]
-        },
-        "mfaConfiguration": "ON",
-        "mfaTypes": [
-          "SMS"
-        ],
-        "verificationMechanisms": [
-          "PHONE_NUMBER"
-        ]
-      }
+      "customAuth": false
     }
   },
   "api": {},

@@ -1,0 +1,24 @@
+{
+  "authSelections": "identityPoolAndUserPool",
+  "resourceName": "reactamplifiedd384ec1b",
+  "serviceType": "imported",
+  "region": "us-east-1",
+  "authProvidersUserPool": [],
+  "requiredAttributes": [
+    "email"
+  ],
+  "passwordPolicyMinLength": 8,
+  "passwordPolicyCharacters": [
+    "Requires Lowercase",
+    "Requires Uppercase",
+    "Requires Numbers",
+    "Requires Symbols"
+  ],
+  "mfaConfiguration": "OPTIONAL",
+  "autoVerifiedAttributes": [
+    "email"
+  ],
+  "mfaTypes": [
+    "SMS Text Message"
+  ]
+}

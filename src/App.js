@@ -41,10 +41,10 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
 
     try {
       setLoading(true);
-      // Upload the file to s3 with private access level.
+      // Upload the file to s3 with public access level.
       await Storage.put(fileName, fileContent, {
         contentType: fileType,
-        level: "private",
+        level: "public",
         progressCallback(progress) {
           console.log(`Uploaded: ${progress.loaded}/${progress.total}`);
         },
@@ -57,7 +57,7 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
   };
 
   const fetchFiles = () => {
-    Storage.list(`${folderName}/`, { level: "private" }) // for listing ALL files without prefix, pass '' instead
+    Storage.list(`${folderName}/`, { level: "public" }) // for listing ALL files without prefix, pass '' instead
       .then((result) => setFiles(result))
       .catch((error) => {
         console.error(error);
@@ -67,11 +67,15 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
 
   return (
     <div>
-      <h1>File Management System</h1>
-
+      <Flex>
+        <h1>File Management System</h1>
+        <Button variation="primary" onClick={signOut}>
+          Sign Out
+        </Button>
+      </Flex>
       <Container text style={{ marginTop: "3em" }}>
         <UserContext.Provider user={user}>
-          <div className="App">
+          <div>
             <h2> Upload File to S3 </h2>
             <Flex>
               <TextField
@@ -92,17 +96,13 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
               />
             )}
           </div>
-          <h1></h1>
-          <div className="App">
+          <div>
             <h2> Download File from S3 </h2>
             <Button onClick={fetchFiles}>Fetch files</Button>
             <FilesList files={files} />
           </div>
         </UserContext.Provider>
       </Container>
-
-      <h1></h1>
-      <button onClick={signOut}>Sign Out</button>
     </div>
   );
 }
