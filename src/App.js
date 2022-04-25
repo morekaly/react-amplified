@@ -1,12 +1,7 @@
 import React, { useState } from "react";
 import { Amplify, Storage } from "aws-amplify";
-import { Container } from "semantic-ui-react";
-import {
-  Button,
-  Flex,
-  TextField,
-  withAuthenticator,
-} from "@aws-amplify/ui-react";
+import { Container, Grid, Divider, Segment, Header } from "semantic-ui-react";
+import { Button, TextField, withAuthenticator } from "@aws-amplify/ui-react";
 
 import awsExports from "./aws-exports";
 import FilesList from "./FilesList";
@@ -23,37 +18,44 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
   }
 
   const [loading, setLoading] = useState(false);
-  const [folderName, setFolderName] = useState();
+  const [folderName, setFolderName] = useState("folder1"); // Harcoded for now
   const [files, setFiles] = useState([]);
+  const [uploadFiles, setUploadFiles] = useState([]);
+
+  const uploadToS3 = async () => {
+    setLoading(true);
+    for (let i = 0; i < uploadFiles.length; i++) {
+      const fileContent = uploadFiles[i];
+      const fileType = uploadFiles[i].type;
+      const ext = fileContent.name.split(".").pop().toLowerCase();
+      // if (!folderName) window.alert("Please enter folder name");
+      const fileName =
+        folderName +
+        "/" +
+        fileContent.name.substr(0, fileContent.name.indexOf(ext) - 1) +
+        "." +
+        ext;
+
+      try {
+        // Upload the file to s3 with public access level.
+        await Storage.put(fileName, fileContent, {
+          contentType: fileType,
+          level: "public",
+          progressCallback(progress) {
+            console.log(`Uploaded: ${progress.loaded}/${progress.total}`);
+          },
+        });
+      } catch (err) {
+        console.log(err);
+      }
+    }
+    setLoading(false);
+    setUploadFiles([]);
+  };
 
   const handleChange = async (e) => {
-    const fileContent = e.target.files[0];
-    /*const fileName = e.target.files[0].name*/
-    const fileType = e.target.files[0].type;
-    let ext = fileContent.name.split(".").pop().toLowerCase();
-    if (!folderName) window.alert("Please enter folder name");
-    let fileName =
-      folderName +
-      "/" +
-      fileContent.name.substr(0, fileContent.name.indexOf(ext) - 1) +
-      "." +
-      ext;
-
-    try {
-      setLoading(true);
-      // Upload the file to s3 with public access level.
-      await Storage.put(fileName, fileContent, {
-        contentType: fileType,
-        level: "public",
-        progressCallback(progress) {
-          console.log(`Uploaded: ${progress.loaded}/${progress.total}`);
-        },
-      });
-      setLoading(false);
-    } catch (err) {
-      console.log(err);
-      setLoading(false);
-    }
+    console.log(e.target.files);
+    setUploadFiles(e.target.files);
   };
 
   const fetchFiles = () => {
@@ -67,41 +69,59 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
 
   return (
     <div>
-      <Flex>
-        <h1>File Management System</h1>
-        <Button variation="primary" onClick={signOut}>
-          Sign Out
-        </Button>
-      </Flex>
-      <Container text style={{ marginTop: "3em" }}>
-        <UserContext.Provider user={user}>
-          <div>
-            <h2> Upload File to S3 </h2>
-            <Flex>
-              <TextField
-                size="small"
-                label="Folder Name"
-                value={folderName}
-                onChange={(e) => setFolderName(e.currentTarget.value)}
-              />
-              <br />
-            </Flex>
-            {loading ? (
-              <h3>Uploading...</h3>
-            ) : (
-              <input
-                type="file"
-                accept="*/*"
-                onChange={(evt) => handleChange(evt)}
-              />
-            )}
-          </div>
-          <div>
-            <h2> Download File from S3 </h2>
-            <Button onClick={fetchFiles}>Fetch files</Button>
-            <FilesList files={files} />
-          </div>
-        </UserContext.Provider>
+      <Grid style={{ margin: "1em" }}>
+        <Grid.Row columns={2}>
+          <Grid.Column>
+            <h1 style={{ marginLeft: "1.5em" }}>File Management System</h1>
+          </Grid.Column>
+          <Grid.Column>
+            <Button
+              variation="primary"
+              onClick={signOut}
+              style={{ float: "right" }}
+            >
+              Sign Out
+            </Button>
+          </Grid.Column>
+        </Grid.Row>
+      </Grid>
+      <Container>
+        <TextField
+          size="small"
+          label="Enter a Folder Name to Upload/Download files"
+          value={folderName}
+          onChange={(e) => setFolderName(e.currentTarget.value)}
+        />
+        {folderName && (
+          <UserContext.Provider user={user}>
+            <Segment placeholder>
+              <Header icon>
+                <div>Upload Files to S3</div>
+                {loading ? (
+                  <h3>Uploading Files...</h3>
+                ) : (
+                  <>
+                    <input
+                      type="file"
+                      accept="*/*"
+                      multiple={true}
+                      onChange={(evt) => handleChange(evt)}
+                    />
+                    <Button onClick={uploadToS3}>Upload</Button>
+                  </>
+                )}
+              </Header>
+            </Segment>
+            <Divider />
+            <Segment placeholder>
+              <Header icon>
+                <div>Download Files from S3</div>
+                <Button onClick={fetchFiles}>Fetch files</Button>
+              </Header>
+              <FilesList files={files} />
+            </Segment>
+          </UserContext.Provider>
+        )}
       </Container>
     </div>
   );

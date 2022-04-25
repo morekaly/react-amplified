@@ -1,6 +1,7 @@
 import React from "react";
-import { Button, Flex } from "@aws-amplify/ui-react";
+import { Button } from "@aws-amplify/ui-react";
 import { Storage } from "aws-amplify";
+import { isEmpty } from "ramda";
 
 const FilesList = ({ files }) => {
   function downloadBlob(blob, filename = "download") {
@@ -32,12 +33,14 @@ const FilesList = ({ files }) => {
     }
   };
 
+  if(isEmpty(files)) return null
+
   return (
     <table>
-      <th>
-        <td>Files</td>
-      </th>
       <tbody>
+        <tr>
+          <th>Files</th>
+        </tr>
         {files.map((file, index) => (
           <tr key={file.key}>
             <td>{index + 1}</td>
