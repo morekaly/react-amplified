@@ -39,14 +39,17 @@ const FilesList = ({ files }) => {
     <table>
       <tbody>
         <tr>
-          <th>Files</th>
+          <th>No.</th>
+          <th>Name</th>
+          <th>Created User</th>
         </tr>
         {files.map((file, index) => (
           <tr key={file.key}>
             <td>{index + 1}</td>
             <td>{file.key}</td>
+            <td>{file.createdUser}</td>
             <td>
-              <Button onClick={() => downloadFile(file.key)}>Download</Button>
+              <Button variation="primary" onClick={() => downloadFile(file.key)}>Download</Button>
             </td>
           </tr>
         ))}

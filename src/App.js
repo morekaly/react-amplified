@@ -1,12 +1,23 @@
 import React, { useState } from "react";
 import { Amplify, Storage } from "aws-amplify";
+import { CognitoIdentityClient } from "@aws-sdk/client-cognito-identity";
+import { fromCognitoIdentityPool } from "@aws-sdk/credential-provider-cognito-identity";
+import { S3Client, HeadObjectCommand } from "@aws-sdk/client-s3";
 import { Container, Grid, Divider, Segment, Header } from "semantic-ui-react";
-import { Button, TextField, withAuthenticator } from "@aws-amplify/ui-react";
+import {
+  Button,
+  TextField,
+  Alert,
+  Flex,
+  withAuthenticator,
+} from "@aws-amplify/ui-react";
 
 import awsExports from "./aws-exports";
 import FilesList from "./FilesList";
 
 import "@aws-amplify/ui-react/styles.css";
+
+import "./App.css";
 
 export const UserContext = React.createContext();
 
@@ -17,10 +28,24 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
     throw new Error(`isPassedToWithAuthenticator was not provided`);
   }
 
+  const userName = user.username;
+
+
+  const client = new S3Client({
+    region: awsExports.aws_user_files_s3_bucket_region,
+    credentials: fromCognitoIdentityPool({
+      client: new CognitoIdentityClient({
+        region: awsExports.aws_user_files_s3_bucket_region,
+      }),
+      identityPoolId: awsExports.aws_cognito_identity_pool_id,
+    }),
+  });
+
   const [loading, setLoading] = useState(false);
-  const [folderName, setFolderName] = useState("folder1"); // Harcoded for now
+  const [folderName, setFolderName] = useState(""); 
   const [files, setFiles] = useState([]);
   const [uploadFiles, setUploadFiles] = useState([]);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
 
   const uploadToS3 = async () => {
     setLoading(true);
@@ -39,28 +64,56 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
       try {
         // Upload the file to s3 with public access level.
         await Storage.put(fileName, fileContent, {
+          metadata: {
+            "Created-User": userName,
+          },
           contentType: fileType,
           level: "public",
           progressCallback(progress) {
             console.log(`Uploaded: ${progress.loaded}/${progress.total}`);
           },
         });
+        setShowSuccessMessage(true);
       } catch (err) {
         console.log(err);
       }
     }
     setLoading(false);
     setUploadFiles([]);
+    setTimeout(() => setShowSuccessMessage(false), 5000);
   };
 
   const handleChange = async (e) => {
-    console.log(e.target.files);
     setUploadFiles(e.target.files);
+  };
+
+  const fetchMetadata = async (result) => {
+    const fileResults = [];
+    const promises = result.map(
+      (file) =>
+        new Promise((resolve, reject) => {
+          const command = new HeadObjectCommand({
+            Bucket: awsExports.aws_user_files_s3_bucket,
+            Key: `public/${file.key}`,
+          });
+          resolve(client.send(command));
+        })
+    );
+
+    Promise.all(promises).then((results) => {
+      results.forEach((response, index) => {
+        fileResults.push({
+          ...result[index],
+          createdUser: response?.Metadata?.["created-user"],
+        });
+      });
+      setFiles(fileResults);
+    });
   };
 
   const fetchFiles = () => {
     Storage.list(`${folderName}/`, { level: "public" }) // for listing ALL files without prefix, pass '' instead
-      .then((result) => setFiles(result))
+      .then(fetchMetadata)
       .catch((error) => {
         console.error(error);
         setFiles([]);
@@ -80,7 +133,7 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
               onClick={signOut}
               style={{ float: "right" }}
             >
-              Sign Out
+              {`${userName}: Sign Out`}
             </Button>
           </Grid.Column>
         </Grid.Row>
@@ -93,31 +146,43 @@ function App({ isPassedToWithAuthenticator = true, signOut, user }) {
           onChange={(e) => setFolderName(e.currentTarget.value)}
         />
         {folderName && (
-          <UserContext.Provider user={user}>
-            <Segment placeholder>
-              <Header icon>
-                <div>Upload Files to S3</div>
-                {loading ? (
-                  <h3>Uploading Files...</h3>
-                ) : (
-                  <>
-                    <input
-                      type="file"
-                      accept="*/*"
-                      multiple={true}
-                      onChange={(evt) => handleChange(evt)}
-                    />
-                    <Button onClick={uploadToS3}>Upload</Button>
-                  </>
-                )}
-              </Header>
+          <UserContext.Provider value={user}>
+            <Header attached="top">Upload Files to S3</Header>
+            <Segment placeholder attached>
+              <Flex direction="row" alignItems="center">
+                <input
+                  type="file"
+                  accept="*/*"
+                  multiple={true}
+                  onChange={(evt) => handleChange(evt)}
+                />
+                <Button
+                  isLoading={loading}
+                  loadingText="Uploading Files..."
+                  variation="primary"
+                  onClick={uploadToS3}
+                >
+                  Upload
+                </Button>
+              </Flex>
             </Segment>
+            {showSuccessMessage && (
+              <Alert variation="success" isDismissible={false} hasIcon={true}>
+                Sucessfully Uploaded files to S3
+              </Alert>
+            )}
             <Divider />
-            <Segment placeholder>
-              <Header icon>
-                <div>Download Files from S3</div>
-                <Button onClick={fetchFiles}>Fetch files</Button>
-              </Header>
+            <Header attached="top">
+              <Flex direction="row" alignItems="center">
+                <>
+                  Download Files from S3
+                  <Button variation="primary" onClick={fetchFiles}>
+                    Fetch files
+                  </Button>
+                </>
+              </Flex>
+            </Header>
+            <Segment placeholder attached>
               <FilesList files={files} />
             </Segment>
           </UserContext.Provider>
